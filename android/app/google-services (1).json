@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "751533369230",
+    "project_id": "mental-health-3-edcc7",
+    "storage_bucket": "mental-health-3-edcc7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:751533369230:android:08653d75359fc85cb826df",
+        "android_client_info": {
+          "package_name": "com.example.animated_calculator"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC35chyx8gPdiFQmLD194CF-3EOpGSSEL0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

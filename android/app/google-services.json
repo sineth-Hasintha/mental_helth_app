@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "751533369230",
+    "project_id": "mental-health-3-edcc7",
+    "storage_bucket": "mental-health-3-edcc7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:751533369230:android:08653d75359fc85cb826df",
+        "android_client_info": {
+          "package_name": "com.example.animated_calculator"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "751533369230-76ttj1vnkicei8663ou7ocian53afvep.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.animated_calculator",
+            "certificate_hash": "0f9c0442c46fb0938142d37f95e7f6cafe0e30b4"
+          }
+        },
+        {
+          "client_id": "751533369230-8qv3i0p4a1jfmuqdnotmck383gp3ta5s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC35chyx8gPdiFQmLD194CF-3EOpGSSEL0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "751533369230-8qv3i0p4a1jfmuqdnotmck383gp3ta5s.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "751533369230-7g2l4is7j1h0of6sfmauca18rdfdl5iq.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.animatedCalculator"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
