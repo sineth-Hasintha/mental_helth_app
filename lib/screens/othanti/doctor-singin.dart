@@ -15,7 +15,7 @@ class DoctorRegistrationPage extends StatefulWidget {
 }
 
 class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
-  // Input fields control කරන්න controllers ටික
+  // TextField පාලනය සඳහා Controllers (ID සහ City ඇතුළුව)
   final TextEditingController _idController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -23,16 +23,15 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
   final TextEditingController _slmcController = TextEditingController();
   final TextEditingController _expController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _cityController = TextEditingController(); // City සඳහා අලුත් Controller එක
 
-  // Specialization list එක සහ තෝරාගන්නා අගය තියාගන්නා variable
   final List<String> _specializations = ['Cardiologist', 'Neurologist', 'Pediatrician', 'General Physician'];
   String? _selectedSpecialization;
 
-  File? _image; // තෝරාගත් photo එක තියාගන්න
-  bool _isUploading = false; // Upload වෙන වෙලාවට loading පෙන්වන්න
+  File? _image;
+  bool _isUploading = false;
 
-  // Gallery එකෙන් photo එකක් තෝරාගැනීමේ function එක
+  // ගැලරියෙන් පින්තූරයක් තෝරාගැනීම
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -43,7 +42,7 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
     }
   }
 
-  // Cloudinary එකට image එක upload කරලා එහි URL එක ලබාගැනීම
+  // Cloudinary වෙත පින්තූරය Upload කර URL එක ලබාගැනීම
   Future<String> _uploadToCloudinary(File imageFile) async {
     final url = Uri.parse('https://api.cloudinary.com/v1_1/dsr08jyjr/image/upload');
     final request = http.MultipartRequest('POST', url)
@@ -55,15 +54,15 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
       final responseData = await response.stream.toBytes();
       final responseString = String.fromCharCodes(responseData);
       final jsonMap = jsonDecode(responseString);
-      return jsonMap['secure_url']; // Cloudinary URL එක return කරයි
+      return jsonMap['secure_url'];
     } else {
       throw Exception("Cloudinary upload failed");
     }
   }
 
-  // දත්ත register කිරීම සහ Firestore හි save කිරීමේ ප්‍රධාන function එක
+  // දත්ත ලියාපදිංචි කිරීමේ ප්‍රධාන Function එක
   Future<void> _registerAndSaveData() async {
-    // අත්‍යාවශ්‍ය field පිරී ඇත්දැයි බැලීම
+    // අත්‍යාවශ්‍ය කොටස් පිරී ඇත්දැයි බැලීම (ID, Email, Password)
     if (_idController.text.trim().isEmpty || _emailController.text.trim().isEmpty || _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please fill all required fields!")),
@@ -71,18 +70,10 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
       return;
     }
 
-    // Password දෙක සමාන දැයි පරීක්ෂා කිරීම
-    if (_passwordController.text != _confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Passwords do not match!"), backgroundColor: Colors.red),
-      );
-      return;
-    }
-
     setState(() => _isUploading = true);
 
     try {
-      // 1. Firebase Authentication හි account එක සෑදීම
+      // 1. Firebase Authentication හි ගිණුම සෑදීම
       UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
@@ -92,21 +83,22 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
       String uid = userCredential.user!.uid;
       String photoUrl = "";
 
-      // 2. Photo එකක් තිබේ නම් එය Cloudinary වෙත යැවීම
+      // 2. පින්තූරයක් තිබේ නම් එය Cloudinary වෙත යැවීම
       if (_image != null) {
         photoUrl = await _uploadToCloudinary(_image!);
       }
 
       // 3. Firestore හි 'doctors' collection එකේ දත්ත save කිරීම
-      // මෙහිදී document ID එක ලෙස Auth UID එකම භාවිතා කරයි (Connect කිරීමට)
+      // මෙහිදී document ID එක ලෙස Auth UID එකම භාවිතා කර ඇත
       await FirebaseFirestore.instance.collection('doctors').doc(uid).set({
-        'Enter-doctor-id': _idController.text.trim(),
+        'Doctor-ID': _idController.text.trim(), // Doctor ID එක
         'Full-Name': _nameController.text.trim(),
         'Email-Address': _emailController.text.trim(),
         'Phone-Number': _phoneController.text.trim(),
         'Specialization': _selectedSpecialization ?? "",
         'SLMC': _slmcController.text.trim(),
         'Experience': _expController.text.trim(),
+        'City': _cityController.text.trim(), // City අගය ගබඩා කිරීම
         'Photo': photoUrl,
         'uid': uid,
         'createdAt': FieldValue.serverTimestamp(),
@@ -117,7 +109,6 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const SuccessPage()));
       }
     } on FirebaseAuthException catch (e) {
-      // Authentication errors handle කිරීම
       String errorMsg = "Registration failed";
       if (e.code == 'email-already-in-use') errorMsg = "Email already in use!";
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMsg), backgroundColor: Colors.redAccent));
@@ -130,7 +121,6 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Screen එකේ උස සහ පළල ලබාගැනීම (Responsiveness සඳහා)
     final double screenHeight = MediaQuery.of(context).size.height;
     final double screenWidth = MediaQuery.of(context).size.width;
 
@@ -178,18 +168,18 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
                 ],
               ),
             ),
-            SizedBox(height: screenHeight * 0.03), // Screen size අනුව ඉඩ තැබීම
+            SizedBox(height: screenHeight * 0.03),
             const Divider(),
             SizedBox(height: screenHeight * 0.02),
 
-            // TextField භාවිතා කර දත්ත ඇතුළත් කරන කොටස්
-            _buildTextField(context, "Enter doctor id", controller: _idController),
+            // TextField භාවිතා කර දත්ත ඇතුළත් කරන කොටස් (ID නැවත එකතු කර ඇත)
+            _buildTextField(context, "Doctor ID", controller: _idController),
             _buildTextField(context, "Full Name", controller: _nameController),
             _buildTextField(context, "Email Address", controller: _emailController),
             _buildTextField(context, "Phone Number", isNumber: true, controller: _phoneController),
 
             _buildLabel("Specialization"),
-            // විශේෂඥතාව තෝරාගැනීමට Dropdown එක
+            // Dropdown එක
             DropdownButtonFormField<String>(
               decoration: _inputDecoration(),
               hint: const Text('select specialization'),
@@ -207,18 +197,19 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
               ],
             ),
 
-            // Password සහ Confirm Password ඇතුළත් කරන කොටස
+            // Password සහ City ඇතුළත් කරන Row එක
             Row(
               children: [
                 Expanded(child: _buildTextField(context, "Password", isPassword: true, controller: _passwordController)),
                 SizedBox(width: screenWidth * 0.04),
-                Expanded(child: _buildTextField(context, "Confirm", isPassword: true, controller: _confirmPasswordController)),
+                // City සඳහා TextField එක
+                Expanded(child: _buildTextField(context, "City", controller: _cityController)),
               ],
             ),
 
             SizedBox(height: screenHeight * 0.05),
 
-            // Register Button එක හෝ Upload වන විට පෙන්වන Loader එක
+            // Register Button එක හෝ Loading එක
             _isUploading
                 ? const Center(child: CircularProgressIndicator(color: Color(0xFF2E7D32)))
                 : CustomButton(
@@ -232,13 +223,13 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
     );
   }
 
-  // Label එකක් සෑදීමට උදවු වන function එක
+  // Label එකක් සෑදීමේ Function එක
   Widget _buildLabel(String text) => Padding(
     padding: const EdgeInsets.only(bottom: 6),
     child: Text(text, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black54)),
   );
 
-  // TextField වලට පොදු decoration එකක් ලබාදීම
+  // TextField සඳහා පොදු Decoration එක
   InputDecoration _inputDecoration() => InputDecoration(
     contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.black12)),
@@ -247,7 +238,7 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
     fillColor: Colors.grey[50],
   );
 
-  // TextField එකක් සෑදීම පහසු කරන function එක (Screen height අනුව spacing සකසා ඇත)
+  // TextField සෑදීම පහසු කරන function එක
   Widget _buildTextField(BuildContext context, String label, {bool isPassword = false, bool isNumber = false, TextEditingController? controller}) {
     final double screenHeight = MediaQuery.of(context).size.height;
     return Column(
@@ -261,14 +252,13 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
           style: const TextStyle(fontSize: 14),
           decoration: _inputDecoration(),
         ),
-        // Screen height එකෙන් 2% ක ඉඩක් පහළින් තබයි
         SizedBox(height: screenHeight * 0.02),
       ],
     );
   }
 }
 
-// සාර්ථකව register වූ පසු පෙන්වන සරල Page එක
+// සාර්ථකව ලියාපදිංචි වූ පසු පෙන්වන Page එක
 class SuccessPage extends StatelessWidget {
   const SuccessPage({super.key});
   @override
