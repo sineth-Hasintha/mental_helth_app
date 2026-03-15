@@ -98,7 +98,6 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
       }
 
       // 3. Firestore හි 'doctors' collection එකේ දත්ත save කිරීම
-      // මෙහිදී document ID එක ලෙස Auth UID එකම භාවිතා කරයි (Connect කිරීමට)
       await FirebaseFirestore.instance.collection('doctors').doc(uid).set({
         'Enter-doctor-id': _idController.text.trim(),
         'Full-Name': _nameController.text.trim(),
@@ -109,12 +108,18 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
         'Experience': _expController.text.trim(),
         'Photo': photoUrl,
         'uid': uid,
+        'status': 'pending', // Admin approval එකට අවශ්‍ය නිසා status එක pending ලෙස යැවීම වැදගත්
         'createdAt': FieldValue.serverTimestamp(),
       });
 
       if (mounted) {
-        // සාර්ථක නම් Success Page එකට යොමු කිරීම
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const SuccessPage()));
+        // සාර්ථක නම් Doctor ගේ නමද සමඟ Pending Page එකට යොමු කිරීම
+        Navigator.pushReplacement(
+          context, 
+          MaterialPageRoute(
+            builder: (context) => DoctorPendingPage(doctorName: _nameController.text.trim()),
+          ),
+        );
       }
     } on FirebaseAuthException catch (e) {
       // Authentication errors handle කිරීම
@@ -130,7 +135,6 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Screen එකේ උස සහ පළල ලබාගැනීම (Responsiveness සඳහා)
     final double screenHeight = MediaQuery.of(context).size.height;
     final double screenWidth = MediaQuery.of(context).size.width;
 
@@ -151,7 +155,6 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Profile Photo එක තෝරාගැනීමේ UI එක
             GestureDetector(
               onTap: _pickImage,
               child: Row(
@@ -178,18 +181,16 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
                 ],
               ),
             ),
-            SizedBox(height: screenHeight * 0.03), // Screen size අනුව ඉඩ තැබීම
+            SizedBox(height: screenHeight * 0.03),
             const Divider(),
             SizedBox(height: screenHeight * 0.02),
 
-            // TextField භාවිතා කර දත්ත ඇතුළත් කරන කොටස්
             _buildTextField(context, "Enter doctor id", controller: _idController),
             _buildTextField(context, "Full Name", controller: _nameController),
             _buildTextField(context, "Email Address", controller: _emailController),
             _buildTextField(context, "Phone Number", isNumber: true, controller: _phoneController),
 
             _buildLabel("Specialization"),
-            // විශේෂඥතාව තෝරාගැනීමට Dropdown එක
             DropdownButtonFormField<String>(
               decoration: _inputDecoration(),
               hint: const Text('select specialization'),
@@ -207,7 +208,6 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
               ],
             ),
 
-            // Password සහ Confirm Password ඇතුළත් කරන කොටස
             Row(
               children: [
                 Expanded(child: _buildTextField(context, "Password", isPassword: true, controller: _passwordController)),
@@ -218,7 +218,6 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
 
             SizedBox(height: screenHeight * 0.05),
 
-            // Register Button එක හෝ Upload වන විට පෙන්වන Loader එක
             _isUploading
                 ? const Center(child: CircularProgressIndicator(color: Color(0xFF2E7D32)))
                 : CustomButton(
@@ -232,13 +231,11 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
     );
   }
 
-  // Label එකක් සෑදීමට උදවු වන function එක
   Widget _buildLabel(String text) => Padding(
     padding: const EdgeInsets.only(bottom: 6),
     child: Text(text, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black54)),
   );
 
-  // TextField වලට පොදු decoration එකක් ලබාදීම
   InputDecoration _inputDecoration() => InputDecoration(
     contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.black12)),
@@ -247,7 +244,6 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
     fillColor: Colors.grey[50],
   );
 
-  // TextField එකක් සෑදීම පහසු කරන function එක (Screen height අනුව spacing සකසා ඇත)
   Widget _buildTextField(BuildContext context, String label, {bool isPassword = false, bool isNumber = false, TextEditingController? controller}) {
     final double screenHeight = MediaQuery.of(context).size.height;
     return Column(
@@ -261,18 +257,80 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
           style: const TextStyle(fontSize: 14),
           decoration: _inputDecoration(),
         ),
-        // Screen height එකෙන් 2% ක ඉඩක් පහළින් තබයි
         SizedBox(height: screenHeight * 0.02),
       ],
     );
   }
 }
 
-// සාර්ථකව register වූ පසු පෙන්වන සරල Page එක
-class SuccessPage extends StatelessWidget {
-  const SuccessPage({super.key});
+// Doctor ගේ නම ලබාගෙන පෙන්වන Pending Page එක
+class DoctorPendingPage extends StatelessWidget {
+  final String doctorName;
+
+  // Constructor එක හරහා Doctor Name එක ලබා ගනී
+  const DoctorPendingPage({super.key, required this.doctorName});
+
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: Text("Registration Successful!")));
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text("Approval Pending", style: TextStyle(color: Colors.black)),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        automaticallyImplyLeading: false, // Back button එක ඉවත් කිරීම
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.hourglass_empty_rounded,
+                size: 80,
+                color: Colors.orangeAccent,
+              ),
+              const SizedBox(height: 30),
+              Text(
+                "Hello Dr. $doctorName,",
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 15),
+              const Text(
+                "Your registration is currently pending admin approval. You will be able to access your dashboard once your account is approved.",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.black54,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 40),
+              ElevatedButton(
+                onPressed: () {
+                  // අවශ්‍ය නම් Login screen එකට යන විදිහට හදන්න පුළුවන්
+                  Navigator.pop(context); 
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2E7D32),
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text("Back to Login", style: TextStyle(color: Colors.white, fontSize: 16)),
+              )
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
