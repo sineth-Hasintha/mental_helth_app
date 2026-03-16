@@ -101,12 +101,18 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
         'City': _cityController.text.trim(), // City අගය ගබඩා කිරීම
         'Photo': photoUrl,
         'uid': uid,
+        'status': 'pending', // Admin approval එකට අවශ්‍ය නිසා status එක pending ලෙස යැවීම වැදගත්
         'createdAt': FieldValue.serverTimestamp(),
       });
 
       if (mounted) {
-        // සාර්ථක නම් Success Page එකට යොමු කිරීම
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const SuccessPage()));
+        // සාර්ථක නම් Doctor ගේ නමද සමඟ Pending Page එකට යොමු කිරීම
+        Navigator.pushReplacement(
+          context, 
+          MaterialPageRoute(
+            builder: (context) => DoctorPendingPage(doctorName: _nameController.text.trim()),
+          ),
+        );
       }
     } on FirebaseAuthException catch (e) {
       String errorMsg = "Registration failed";
@@ -141,7 +147,6 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Profile Photo එක තෝරාගැනීමේ UI එක
             GestureDetector(
               onTap: _pickImage,
               child: Row(
@@ -172,7 +177,7 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
             const Divider(),
             SizedBox(height: screenHeight * 0.02),
 
-            // TextField භාවිතා කර දත්ත ඇතුළත් කරන කොටස් (ID නැවත එකතු කර ඇත)
+            // TextField භාවිතා කර දත්ත ඇතුළත් කරන කොටස්
             _buildTextField(context, "Doctor ID", controller: _idController),
             _buildTextField(context, "Full Name", controller: _nameController),
             _buildTextField(context, "Email Address", controller: _emailController),
@@ -258,11 +263,74 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
   }
 }
 
-// සාර්ථකව ලියාපදිංචි වූ පසු පෙන්වන Page එක
-class SuccessPage extends StatelessWidget {
-  const SuccessPage({super.key});
+// Doctor ගේ නම ලබාගෙන පෙන්වන Pending Page එක
+class DoctorPendingPage extends StatelessWidget {
+  final String doctorName;
+
+  // Constructor එක හරහා Doctor Name එක ලබා ගනී
+  const DoctorPendingPage({super.key, required this.doctorName});
+
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: Text("Registration Successful!")));
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text("Approval Pending", style: TextStyle(color: Colors.black)),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        automaticallyImplyLeading: false, // Back button එක ඉවත් කිරීම
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.hourglass_empty_rounded,
+                size: 80,
+                color: Colors.orangeAccent,
+              ),
+              const SizedBox(height: 30),
+              Text(
+                "Hello Dr. $doctorName,",
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 15),
+              const Text(
+                "Your registration is currently pending admin approval. You will be able to access your dashboard once your account is approved.",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.black54,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 40),
+              ElevatedButton(
+                onPressed: () {
+                  // අවශ්‍ය නම් Login screen එකට යන විදිහට හදන්න පුළුවන්
+                  Navigator.pop(context); 
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2E7D32),
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text("Back to Login", style: TextStyle(color: Colors.white, fontSize: 16)),
+              )
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

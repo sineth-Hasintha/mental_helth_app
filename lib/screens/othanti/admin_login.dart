@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../admin/Admin_Dashboard.dart';
 import '../../widgets/w-second.dart';
-
 
 class AdminLoginPage extends StatefulWidget {
   const AdminLoginPage({super.key});
@@ -16,7 +16,6 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
   // Focus nodes එකතු කළා keyboard එක force කරන්න
   final FocusNode _idFocus = FocusNode();
   final FocusNode _passFocus = FocusNode();
-
 
   @override
   void dispose() {
@@ -40,7 +39,10 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
             Align(
               alignment: Alignment.topLeft,
               child: Padding(
-                padding: EdgeInsets.only(left: screenWidth * 0.01, top: screenHeight * 0.01),
+                padding: EdgeInsets.only(
+                  left: screenWidth * 0.01,
+                  top: screenHeight * 0.01,
+                ),
                 child: IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
@@ -59,7 +61,10 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                     SizedBox(height: screenHeight * 0.02),
                     const Text(
                       'Login',
-                      style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     SizedBox(height: screenHeight * 0.01),
                     const Text(
@@ -79,7 +84,9 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                       decoration: InputDecoration(
                         labelText: 'Admin ID',
                         prefixIcon: const Icon(Icons.person_outline),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
                       ),
                     ),
 
@@ -97,10 +104,17 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                         labelText: 'Password',
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
-                          icon: Icon(_isObscured ? Icons.visibility_off : Icons.visibility),
-                          onPressed: () => setState(() => _isObscured = !_isObscured),
+                          icon: Icon(
+                            _isObscured
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                          onPressed: () =>
+                              setState(() => _isObscured = !_isObscured),
                         ),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
                       ),
                     ),
 
@@ -113,14 +127,21 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                         child: CustomButton1(
                           title: "Log in",
                           onPressed: () {
-                            if (_idController.text == "admin" && _passwordController.text == "1234") {
-                              Navigator.push(context, MaterialPageRoute(builder: (context) => const SuccessPage()));
+                            if (_idController.text == "admin" &&
+                                _passwordController.text == "1234") {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const AdminDashboardPage(),
+                                ),
+                              );
                             }
                           },
                         ),
                       ),
                     ),
-                    SizedBox(height: 50),
+                    const SizedBox(height: 50),
                   ],
                 ),
               ),
@@ -129,12 +150,5 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
         ),
       ),
     );
-  }
-}
-class SuccessPage extends StatelessWidget {
-  const SuccessPage({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: Text("Login Successful!")));
   }
 }
