@@ -63,8 +63,9 @@ class _dloginState extends State<dlogin> {
     } on FirebaseAuthException catch (e) {
       // Firebase errors (wrong password wage dewal) handle kireema
       String message = "Login failed!";
-      if (e.code == 'user-not-found') message = "User kenek natha.";
-      else if (e.code == 'wrong-password') message = "Password eka waradi.";
+      if (e.code == 'user-not-found') {
+        message = "User kenek natha.";
+      } else if (e.code == 'wrong-password') message = "Password eka waradi.";
 
       // User ta error message ekak pennanna
       ScaffoldMessenger.of(context).showSnackBar(

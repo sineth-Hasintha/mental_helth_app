@@ -134,7 +134,7 @@ class _AppointmentPageState extends State<AppointmentPage> {
             color: isActive ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(5),
             boxShadow: isActive
-                ? [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))]
+                ? [const BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))]
                 : [],
           ),
           child: Text(

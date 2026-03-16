@@ -97,8 +97,9 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
                     stream: FirebaseFirestore.instance.collection('confirm-doctor').snapshots(),
                     builder: (context, snapshot) {
                       if (snapshot.hasError) return const Center(child: Text("Error fetching data"));
-                      if (snapshot.connectionState == ConnectionState.waiting)
+                      if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
+                      }
 
                       // පෙරා ගත් (Filtered) දත්ත ලැයිස්තුව
                       var filteredList = snapshot.data!.docs.where((doc) {

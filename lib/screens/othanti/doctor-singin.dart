@@ -188,7 +188,7 @@ class _DoctorRegistrationPageState extends State<DoctorRegistrationPage> {
             DropdownButtonFormField<String>(
               decoration: _inputDecoration(),
               hint: const Text('select specialization'),
-              value: _selectedSpecialization,
+              initialValue: _selectedSpecialization,
               items: _specializations.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
               onChanged: (val) => setState(() => _selectedSpecialization = val),
             ),

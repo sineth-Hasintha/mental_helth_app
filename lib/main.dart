@@ -19,14 +19,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Mindspace', // ඔයාගේ App එකේ නම
 
       // ඇප් එක පටන් ගන්න කොටම පෙන්වන පිටුව (Home)
       // මම මෙතන 'Fist()' කියලා දුන්නේ ඔයාගේ fist.dart එකේ තියෙන Class එකේ නමයි.
       // ඒක රතු ඉරක් ආවොත්, ඒ වෙනුවට fist.dart එකේ තියෙන ඇත්තම Class නම දෙන්න.
-      home: const SplashPage(),
+      home: SplashPage(),
     );
   }
 }

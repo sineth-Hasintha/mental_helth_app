@@ -17,7 +17,7 @@ class _MoodTrackerPageState extends State<MoodTrackerPage> {
   bool _isBusy = false;
   bool _canDetect = true;
   String _currentMood = "Scanning...";
-  List<Map<String, String>> _history = [];
+  final List<Map<String, String>> _history = [];
   CameraDescription? _cameraDescription;
 
   final FaceDetector _faceDetector = FaceDetector(
