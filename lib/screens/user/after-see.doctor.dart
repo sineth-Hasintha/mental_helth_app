@@ -6,7 +6,7 @@ class DoctorDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 1. කලින් පිටුවෙන් එවන දත්ත ලබා ගැනීම
+    // 1. කලින් පිටුවෙන් (DoctorListScreen) එවන සියලුම දත්ත ලබා ගැනීම
     final Map<String, dynamic> data = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
 
     // 2. Screen එකේ ප්‍රමාණයන් ලබා ගැනීම (Responsive UI සඳහා)
@@ -17,7 +17,7 @@ class DoctorDetailsPage extends StatelessWidget {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // පසුබිමේ ඇති කොළ පැහැති රවුම් (UI Design එක සඳහා)
+          // පසුබිමේ ඇති කොළ පැහැති රවුම්
           Positioned(
             right: -sWidth * 0.1,
             top: sHeight * 0.30,
@@ -25,7 +25,7 @@ class DoctorDetailsPage extends StatelessWidget {
               width: sWidth * 0.6,
               height: sWidth * 0.6,
               decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.5), // withOpacity වෙනුවට නව ක්‍රමය
+                  color: Colors.green.withValues(alpha: 0.5),
                   shape: BoxShape.circle
               ),
             ),
@@ -127,17 +127,17 @@ class DoctorDetailsPage extends StatelessWidget {
 
                 SizedBox(height: sHeight * 0.04),
 
-                // Book Appointment Button - වැදගත්ම කොටස
+                // Book Appointment Button
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: sWidth * 0.1),
                   child: ElevatedButton(
                     onPressed: () {
-                      // මෙහිදී දත්ත String බවට පත් කර ඊළඟ පිටුවට යවයි
+                      // මෙහිදී 'Full-Name' සහ 'Doctor-ID' යන දත්ත දෙකම BookAppointmentPage වෙත යවයි
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => BookAppointmentScreen(
-                            // .toString() මගින් අර double type error එක විසඳේ
+                          builder: (context) => BookAppointmentPage(
+                            // දත්ත ලබාගෙන String වලට convert කර යැවීම
                             doctorName: (data['Full-Name'] ?? 'Unknown').toString(),
                             doctorId: (data['Doctor-ID'] ?? '').toString(),
                           ),

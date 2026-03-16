@@ -94,7 +94,7 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
                 // Firestore ලැයිස්තුව
                 Expanded(
                   child: StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance.collection('conform-doctor').snapshots(),
+                    stream: FirebaseFirestore.instance.collection('confirm-doctor').snapshots(),
                     builder: (context, snapshot) {
                       if (snapshot.hasError) return const Center(child: Text("Error fetching data"));
                       if (snapshot.connectionState == ConnectionState.waiting)
@@ -116,7 +116,7 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
                         padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
                         itemCount: filteredList.length,
                         itemBuilder: (context, index) {
-                          // Screen size පරාමිති ලෙස Card එකට යැවීම
+                          // filteredList[index] එක DocumentSnapshot එකක් ලෙස යවනවා
                           return _buildDoctorCard(context, filteredList[index], screenWidth, screenHeight);
                         },
                       );
@@ -133,10 +133,12 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
 
   // ඩොක්ටර් කාඩ් එක (Responsive)
   Widget _buildDoctorCard(BuildContext context, DocumentSnapshot doc, double sWidth, double sHeight) {
+    // Firestore දත්ත ලබා ගැනීම
     var data = doc.data() as Map<String, dynamic>;
 
     return GestureDetector(
       onTap: () {
+        // මෙහිදී 'Doctor-ID' ඇතුළු සියලුම දත්ත 'data' Map එක හරහා ඊළඟ පිටුවට යැවේ.
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -147,7 +149,7 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
       },
       child: Container(
         margin: EdgeInsets.only(bottom: sHeight * 0.02),
-        padding: EdgeInsets.all(sWidth * 0.035), // Responsive Padding
+        padding: EdgeInsets.all(sWidth * 0.035),
         decoration: BoxDecoration(
           color: Colors.grey[300],
           borderRadius: BorderRadius.circular(sWidth * 0.05),
@@ -161,13 +163,13 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
                   ? NetworkImage(data['Photo'])
                   : const NetworkImage('https://via.placeholder.com/150'),
             ),
-            SizedBox(width: sWidth * 0.04), // Responsive Spacing
+            SizedBox(width: sWidth * 0.04),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Dr. ${data['Full-Name']}",
+                    "Dr. ${data['Full-Name'] ?? ''}",
                     style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: sWidth * 0.045,
@@ -175,7 +177,7 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
                     ),
                   ),
                   Text(
-                      "${data['Specialization']}",
+                      "${data['Specialization'] ?? ''}",
                       style: TextStyle(fontSize: sWidth * 0.035, color: Colors.black54)
                   ),
                   // නගරය පෙන්වීම
@@ -187,6 +189,7 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
                           fontSize: sWidth * 0.03
                       )
                   ),
+                  // සටහන: data['Doctor-ID'] මෙහි UI එකේ පෙන්වන්නේ නැත, නමුත් එය 'arguments' හරහා යැවේ.
                 ],
               ),
             ),
@@ -196,4 +199,3 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
     );
   }
 }
-
