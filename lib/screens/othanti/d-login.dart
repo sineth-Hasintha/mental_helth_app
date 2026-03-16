@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Firebase library eka
 import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore check karanna meka oni
 import 'forgrt-password.dart';
-import 'package:animated_calculator/widgets/w-second.dart';// Forgot password screen eka import kireema
+import '../../widgets/w-second.dart'; // Forgot password screen eka import kireema
 
 class dlogin extends StatefulWidget {
   const dlogin({super.key});

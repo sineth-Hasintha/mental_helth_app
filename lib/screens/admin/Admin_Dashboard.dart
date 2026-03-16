@@ -1,36 +1,31 @@
-import 'package:animated_calculator/screens/admin/Doctor_list_page.dart';
 import 'package:flutter/material.dart';
-import 'user_list_page.dart';
-import 'Appoinment_pending_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'admin_doctor_approval.dart'; // Pending page එකට යන්න මේක import කරන්න (ඔබගේ path එක නිවැරදිව දෙන්න)
 
-class AdminDashboard extends StatefulWidget {
-  const AdminDashboard({super.key});
+class AdminDashboardPage extends StatefulWidget {
+  const AdminDashboardPage({super.key});
 
   @override
-  State<AdminDashboard> createState() => _AdminDashboardState();
+  State<AdminDashboardPage> createState() => _AdminDashboardPageState();
 }
 
-class _AdminDashboardState extends State<AdminDashboard> {
+class _AdminDashboardPageState extends State<AdminDashboardPage> {
   int _selectedIndex = 0;
 
+  // Bottom Navigation Bar එකේ බටන් click කරාම වෙනස් වෙන්න
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+    // අවශ්‍ය නම් මෙතනින් වෙනත් pages වලට navigate කරන්න පුළුවන්
+    // උදා: index == 3 නම් Doctor list එකට යන්න.
   }
 
   @override
   Widget build(BuildContext context) {
-    // Screen size detect කිරීම
-    final double screenHeight = MediaQuery.of(context).size.height;
+    // Screen එකේ පළල සහ උස ලබාගැනීම
     final double screenWidth = MediaQuery.of(context).size.width;
-
-    final List<Widget> _pages = [
-      HomeScreen(onTotalUsersTap: () => _onItemTapped(1)),
-      const UserListPage(),
-      const AppointmentPage(),
-      const DoctorListPage(),
-    ];
+    final double screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -38,179 +33,352 @@ class _AdminDashboardState extends State<AdminDashboard> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: Colors.black, size: screenWidth * 0.05),
-          onPressed: () {
-            if (_selectedIndex == 0) {
-              Navigator.pop(context);
-            } else {
-              setState(() {
-                _selectedIndex = 0;
-              });
-            }
-          },
-        ),
-      ),
-      body: _pages[_selectedIndex],
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: Colors.black12, width: 1)),
-        ),
-        child: BottomNavigationBar(
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          currentIndex: _selectedIndex,
-          selectedItemColor: const Color(0xFF338B22),
-          unselectedItemColor: Colors.grey,
-          // Tablet වලදී labels ඕනෑවට වඩා ලොකු වීම වැළැක්වීමට
-          selectedLabelStyle: TextStyle(fontSize: screenWidth * 0.03 > 14 ? 14 : screenWidth * 0.03),
-          unselectedLabelStyle: TextStyle(fontSize: screenWidth * 0.03 > 12 ? 12 : screenWidth * 0.03),
-          showUnselectedLabels: true,
-          onTap: _onItemTapped,
-          items: [
-            BottomNavigationBarItem(
-              icon: _buildIcon('assets/images/Home.png', screenWidth),
-              label: 'Dashboard',
-            ),
-            BottomNavigationBarItem(
-              icon: _buildIcon('assets/images/User.png', screenWidth),
-              label: 'Users',
-            ),
-            BottomNavigationBarItem(
-              icon: _buildIcon('assets/images/Appoinment.png', screenWidth),
-              label: 'Appoinments',
-            ),
-            BottomNavigationBarItem(
-              icon: _buildIcon('assets/images/Doctor.png', screenWidth),
-              label: 'Doctors',
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildIcon(String imagePath, double screenWidth) {
-    // Icon size එක screen width එකෙන් 6% ක් ලෙස (උපරිමය 26)
-    double iconSize = screenWidth * 0.065 > 26 ? 26 : screenWidth * 0.065;
-    return Image.asset(
-      imagePath,
-      width: iconSize,
-      height: iconSize,
-    );
-  }
-}
-
-class HomeScreen extends StatelessWidget {
-  final VoidCallback onTotalUsersTap;
-
-  const HomeScreen({super.key, required this.onTotalUsersTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final double screenHeight = MediaQuery.of(context).size.height;
-    final double screenWidth = MediaQuery.of(context).size.width;
-
-    return SingleChildScrollView( // Screen එක කුඩා වුවහොත් scroll කිරීමට
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
-        child: Column(
-          children: [
-            SizedBox(height: screenHeight * 0.03),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  onTap: onTotalUsersTap,
-                  child: _buildStatCard(
-                    icon: Icons.person,
-                    title: 'Total\nUsers',
-                    value: '87',
-                    color: const Color(0xFF91C3E8),
-                    screenWidth: screenWidth,
-                  ),
-                ),
-                _buildStatCard(
-                  icon: Icons.person_add_alt_1,
-                  title: 'Total\nDoctors',
-                  value: '20',
-                  color: const Color(0xFFC3EE85),
-                  screenWidth: screenWidth,
-                ),
-              ],
-            ),
-            SizedBox(height: screenHeight * 0.02), // Row අතර පරතරය
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildStatCard(
-                  icon: Icons.pending_actions,
-                  title: 'Pending\nApprovals',
-                  value: '7',
-                  color: const Color(0xFFEDD187),
-                  screenWidth: screenWidth,
-                ),
-                _buildStatCard(
-                  icon: Icons.calendar_today,
-                  title: 'Appointment',
-                  value: '18',
-                  color: const Color(0xFF2196F3),
-                  textColor: Colors.white,
-                  screenWidth: screenWidth,
-                ),
-              ],
-            ),
-            SizedBox(height: screenHeight * 0.03),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatCard({
-    required IconData icon,
-    required String title,
-    required String value,
-    required Color color,
-    required double screenWidth,
-    Color textColor = Colors.black,
-  }) {
-    // Card එකේ size එක screen width එකෙන් 42% ක් ලෙස
-    double cardWidth = screenWidth * 0.42;
-
-    return Container(
-      width: cardWidth,
-      // Card එක හතරැස්ව තබා ගැනීමට (Aspect Ratio)
-      padding: EdgeInsets.all(screenWidth * 0.04),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: screenWidth * 0.08 > 30 ? 30 : screenWidth * 0.08, color: textColor),
-          SizedBox(height: screenWidth * 0.02),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: screenWidth * 0.04 > 16 ? 16 : screenWidth * 0.04,
-              fontWeight: FontWeight.w600,
-              color: textColor,
-            ),
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: Colors.black,
+            size: screenWidth * 0.055,
           ),
-          SizedBox(height: screenWidth * 0.03),
-          Center(
-            child: Text(
-              value,
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Padding(
+        padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
+        child: SingleChildScrollView(
+          child: Column(
+          children: [
+            SizedBox(height: screenHeight * 0.04),
+
+            // පළමු පේළිය (Total Users & Total Doctors)
+            Row(
+              children: [
+                _buildDashboardCard(
+                  title: "Total\nUsers",
+                  icon: Icons.person,
+                  backgroundColor: const Color(0xFF8BBCE5), // Light Blue
+                  textColor: Colors.black,
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .snapshots(),
+                  screenWidth: screenWidth,
+                  screenHeight: screenHeight,
+                ),
+                _buildDashboardCard(
+                  title: "Total\nDoctors",
+                  icon: Icons.medical_services_outlined,
+                  backgroundColor: const Color(0xFFA5E364), // Light Green
+                  textColor: Colors.black,
+                  // Approve වුනු Doctors ලා ගණන පමණක් ගණනය කිරීම
+                  stream: FirebaseFirestore.instance
+                      .collection('doctors')
+                      .where('status', isEqualTo: 'approved')
+                      .snapshots(),
+                  screenWidth: screenWidth,
+                  screenHeight: screenHeight,
+                ),
+              ],
+            ),
+
+            SizedBox(height: screenHeight * 0.02),
+
+            // දෙවන පේළිය (Pending Approvals & Appointments)
+            Row(
+              children: [
+                _buildDashboardCard(
+                  title: "Pending\nApprovals",
+                  icon: Icons.pending_actions,
+                  backgroundColor: const Color(0xFFEED16C), // Yellow/Orange
+                  textColor: Colors.black,
+                  // Pending තත්වයේ සිටින Doctors ලා ගණන
+                  stream: FirebaseFirestore.instance
+                      .collection('doctors')
+                      .where('status', isEqualTo: 'pending')
+                      .snapshots(),
+                  screenWidth: screenWidth,
+                  screenHeight: screenHeight,
+                  onTap: () {
+                    // Pending කාඩ් එක click කරාම අලුතෙන් හැදුව Admin Approval Page එකට යනවා
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AdminDoctorApprovalPage(),
+                      ),
+                    );
+                  },
+                ),
+                _buildDashboardCard(
+                  title:
+                      "\nAppoinment", // Appoinment කියන එක පල්ලෙහායින් පෙන්වන්න \n එකක් දැම්මා
+                  icon: Icons.calendar_month,
+                  backgroundColor: const Color(0xFF1E75FB), // Blue
+                  textColor: Colors.white,
+                  stream: FirebaseFirestore.instance
+                      .collection('appointments')
+                      .snapshots(),
+                  screenWidth: screenWidth,
+                  screenHeight: screenHeight,
+                ),
+              ],
+            ),
+
+            SizedBox(height: screenHeight * 0.04),
+
+            // Approved Doctors Section
+            Text(
+              "Approved Doctors",
               style: TextStyle(
-                fontSize: screenWidth * 0.08 > 32 ? 32 : screenWidth * 0.08,
+                fontSize: screenWidth * 0.05,
                 fontWeight: FontWeight.bold,
-                color: textColor,
+                color: Colors.black,
               ),
             ),
+
+            SizedBox(height: screenHeight * 0.02),
+
+            _buildApprovedDoctorsTable(screenWidth, screenHeight),
+          ],
+        ),
+        ),
+      ),
+
+      // Bottom Navigation Bar
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        selectedItemColor: Colors.green,
+        unselectedItemColor: Colors.black,
+        showUnselectedLabels: true,
+        selectedFontSize: screenWidth * 0.03,
+        unselectedFontSize: screenWidth * 0.03,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home, size: 28),
+            label: 'Dashboard',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person, size: 28),
+            label: 'Users',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_today, size: 26),
+            label: 'Appointments',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.medical_services, size: 28),
+            label: 'Doctors',
           ),
         ],
+      ),
+    );
+  }
+
+  // Cards නිර්මාණය කිරීම සඳහා භාවිත කරන පොදු Widget එක (Reusable Component)
+  Widget _buildDashboardCard({
+    required String title,
+    required IconData icon,
+    required Color backgroundColor,
+    required Color textColor,
+    required Stream<QuerySnapshot> stream,
+    required double screenWidth,
+    required double screenHeight,
+    VoidCallback? onTap, // Card එක click කරන්න පුළුවන් වෙන්න
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: screenHeight * 0.18, // Card එකේ උස
+          margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.02),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(12), // Corners රවුම් කිරීම
+          ),
+          child: StreamBuilder<QuerySnapshot>(
+            stream: stream,
+            builder: (context, snapshot) {
+              String count = "0"; // Default අගය
+
+              // Database එකෙන් data ආවොත් ඒ ගණන පෙන්වීම
+              if (snapshot.hasData) {
+                count = snapshot.data!.docs.length.toString();
+              } else if (snapshot.connectionState == ConnectionState.waiting) {
+                count = "..."; // Load වෙන වෙලාවට පෙන්වන දේ
+              }
+
+              return Padding(
+                padding: EdgeInsets.all(screenWidth * 0.03),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(icon, color: textColor, size: screenWidth * 0.05),
+                        SizedBox(width: screenWidth * 0.01),
+                        Flexible(
+                          child: Text(
+                            title,
+                            style: TextStyle(
+                              color: textColor,
+                              fontSize: screenWidth * 0.04,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    Text(
+                      count,
+                      style: TextStyle(
+                        color: textColor,
+                        fontSize: screenWidth * 0.065,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Approved Doctors Table
+  Widget _buildApprovedDoctorsTable(double screenWidth, double screenHeight) {
+    return Container(
+      height: screenHeight * 0.35,
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('doctors')
+            .where('status', isEqualTo: 'approved')
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Center(
+              child: Text(
+                "No approved doctors",
+                style: TextStyle(fontSize: screenWidth * 0.04),
+              ),
+            );
+          }
+
+          final doctors = snapshot.data!.docs;
+
+          return Column(
+            children: [
+              // Table Headers
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.03, vertical: screenHeight * 0.015),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(9),
+                    topRight: Radius.circular(9),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        "Name",
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenWidth * 0.035),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        "Specialization",
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenWidth * 0.035),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    Expanded(
+                      flex: 1,
+                      child: Text(
+                        "Status",
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenWidth * 0.035),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              // Table Rows
+              Expanded(
+                child: ListView.builder(
+                  itemCount: doctors.length,
+                  itemBuilder: (context, index) {
+                    var doc = doctors[index];
+                    String name = doc['Full-Name'] ?? 'Unknown';
+                    String specialization = doc['Specialization'] ?? 'General';
+
+                    return Container(
+                      padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.03, vertical: screenHeight * 0.012),
+                      decoration: BoxDecoration(
+                        color: index.isEven ? Colors.white : Colors.grey[50],
+                        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 2,
+                            child: Text(
+                              "Dr. $name",
+                              style: TextStyle(fontSize: screenWidth * 0.032),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: Text(
+                              specialization,
+                              style: TextStyle(fontSize: screenWidth * 0.032, color: Colors.black54),
+                              textAlign: TextAlign.center,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Expanded(
+                            flex: 1,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF65B741),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                "✓",
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.035,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
