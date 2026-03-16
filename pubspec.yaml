@@ -29,6 +29,7 @@ dependencies:
 
   # --- Cloudinary පැකේජ් එක ---
   cloudinary_public: ^0.23.1 # <-- මේක අලුතින්ම ඇඩ් කළා (Google Login වලට අනිවාර්යයි)
+  url_launcher: ^6.3.2 #for coll
 
 dev_dependencies:
   flutter_test:
