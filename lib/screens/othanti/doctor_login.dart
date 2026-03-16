@@ -31,76 +31,76 @@ class _DoctorLoginPageState extends State<DoctorLoginPage> {
     setState(() => _isLoading = true);
 
     try {
-      // Firebase Authentication සහ نام
+      // Firebase Authentication
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(
-            email: _emailController.text.trim(),
-            password: _passwordController.text.trim(),
-          );
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
 
-      // Firestore එකෙන් Doctor Data එක ගැනීම
-      DocumentSnapshot doctorSnapshot = await FirebaseFirestore.instance
-          .collection('doctors')
-          .doc(userCredential.user!.uid)
+      String uid = userCredential.user!.uid;
+
+      // 1. මුලින්ම 'confirm-doctor' table එකේ ඉන්නවද කියලා බලමු (Approved නම් ඉන්නේ මෙතන)
+      DocumentSnapshot confirmedDoc = await FirebaseFirestore.instance
+          .collection('confirm-doctor')
+          .doc(uid)
           .get();
 
-      if (!doctorSnapshot.exists) {
+      if (confirmedDoc.exists) {
+        if (mounted) {
+          String doctorName = confirmedDoc['Full-Name'] ?? 'Doctor';
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DoctorDashboardPage(
+                doctorName: doctorName,
+              ),
+            ),
+          );
+        }
+        return; // වැඩේ ඉවරයි
+      }
+
+      // 2. එතන නැත්නම් 'doctors' table එකේ (Pending/Rejected) ඉන්නවද බලමු
+      DocumentSnapshot pendingDoc = await FirebaseFirestore.instance
+          .collection('doctors')
+          .doc(uid)
+          .get();
+
+      if (pendingDoc.exists) {
+        String status = pendingDoc['status'] ?? 'pending';
+
+        if (status == 'pending') {
+          if (mounted) {
+            String doctorName = pendingDoc['Full-Name'] ?? 'Doctor';
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DoctorPendingApprovalPage(doctorName: doctorName),
+              ),
+            );
+          }
+        } else if (status == 'rejected') {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Your application was rejected. Please contact admin."),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          await FirebaseAuth.instance.signOut();
+        }
+      } else {
+        // කොහෙවත්ම නැත්නම්
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Doctor profile not found")),
           );
         }
-        setState(() => _isLoading = false);
-        return;
       }
 
-      // Doctor Status Check කිරීම
-      String status = doctorSnapshot['status'] ?? 'pending';
-
-      if (status == 'approved') {
-        // Approved නම් Dashboard එකට යවමු
-        if (mounted) {
-          String doctorName = doctorSnapshot['Full-Name'] ?? 'Doctor';
-          String doctorId = doctorSnapshot['Enter-doctor-id'] ?? '';
-
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => DoctorDashboard(
-                doctorName: doctorName,
-                doctorId: doctorId,
-                uid: userCredential.user!.uid,
-              ),
-            ),
-          );
-        }
-      } else if (status == 'pending') {
-        // Pending නම් දෙවැනි පිටුවට යවමු
-        if (mounted) {
-          String doctorName = doctorSnapshot['Full-Name'] ?? 'Doctor';
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  DoctorPendingApprovalPage(doctorName: doctorName),
-            ),
-          );
-        }
-      } else if (status == 'rejected') {
-        // Rejected නම් error message පෙන්වමු
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                "Your application was rejected. Please contact admin.",
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        // Firebase logout
-        await FirebaseAuth.instance.signOut();
-      }
     } on FirebaseAuthException catch (e) {
       String errorMsg = "Login failed";
       if (e.code == 'user-not-found') {
@@ -150,7 +150,6 @@ class _DoctorLoginPageState extends State<DoctorLoginPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: screenHeight * 0.08),
-
             Center(
               child: Icon(
                 Icons.medical_services_outlined,
@@ -158,9 +157,7 @@ class _DoctorLoginPageState extends State<DoctorLoginPage> {
                 color: const Color(0xFF2E7D32),
               ),
             ),
-
             SizedBox(height: screenHeight * 0.06),
-
             Center(
               child: Text(
                 "Welcome Back",
@@ -171,9 +168,7 @@ class _DoctorLoginPageState extends State<DoctorLoginPage> {
                 ),
               ),
             ),
-
             SizedBox(height: screenHeight * 0.02),
-
             Center(
               child: Text(
                 "Login to your doctor account",
@@ -183,99 +178,44 @@ class _DoctorLoginPageState extends State<DoctorLoginPage> {
                 ),
               ),
             ),
-
             SizedBox(height: screenHeight * 0.08),
-
-            // Email Field
-            Text(
-              "Email Address",
-              style: TextStyle(
-                fontSize: screenWidth * 0.04,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            Text("Email Address", style: TextStyle(fontSize: screenWidth * 0.04, fontWeight: FontWeight.w600)),
             SizedBox(height: screenHeight * 0.01),
             TextField(
               controller: _emailController,
               focusNode: _emailFocusNode,
               keyboardType: TextInputType.emailAddress,
-              style: const TextStyle(fontSize: 14),
               decoration: InputDecoration(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 15,
-                  vertical: 14,
-                ),
                 hintText: "Enter your email",
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Colors.black12),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(
-                    color: Color(0xFF2E7D32),
-                    width: 1.5,
-                  ),
-                ),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.black12)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 1.5)),
                 filled: true,
                 fillColor: Colors.grey[50],
               ),
             ),
-
             SizedBox(height: screenHeight * 0.025),
-
-            // Password Field
-            Text(
-              "Password",
-              style: TextStyle(
-                fontSize: screenWidth * 0.04,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            Text("Password", style: TextStyle(fontSize: screenWidth * 0.04, fontWeight: FontWeight.w600)),
             SizedBox(height: screenHeight * 0.01),
             TextField(
               controller: _passwordController,
               focusNode: _passwordFocusNode,
               obscureText: _isObscured,
-              style: const TextStyle(fontSize: 14),
               decoration: InputDecoration(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 15,
-                  vertical: 14,
-                ),
                 hintText: "Enter your password",
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Colors.black12),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(
-                    color: Color(0xFF2E7D32),
-                    width: 1.5,
-                  ),
-                ),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.black12)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 1.5)),
                 filled: true,
                 fillColor: Colors.grey[50],
                 suffixIcon: IconButton(
-                  icon: Icon(
-                    _isObscured ? Icons.visibility_off : Icons.visibility,
-                    color: Colors.black54,
-                  ),
+                  icon: Icon(_isObscured ? Icons.visibility_off : Icons.visibility, color: Colors.black54),
                   onPressed: () => setState(() => _isObscured = !_isObscured),
                 ),
               ),
             ),
-
             SizedBox(height: screenHeight * 0.05),
-
             _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
-                  )
+                ? const Center(child: CircularProgressIndicator(color: Color(0xFF2E7D32)))
                 : CustomButton(text: "Login", onPressed: _doctorLogin),
-
-            SizedBox(height: screenHeight * 0.03),
           ],
         ),
       ),
@@ -292,82 +232,25 @@ class _DoctorLoginPageState extends State<DoctorLoginPage> {
   }
 }
 
-// Doctor පිටුවට යාමට පෙර අනුමතිය බලාපොරොත්තු වෙන පිටුව
 class DoctorPendingApprovalPage extends StatelessWidget {
   final String doctorName;
-
   const DoctorPendingApprovalPage({super.key, required this.doctorName});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text(
-          "Pending Approval",
-          style: TextStyle(color: Colors.black),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-      ),
       body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.hourglass_empty_rounded,
-                size: 80,
-                color: Colors.orangeAccent,
-              ),
-              const SizedBox(height: 30),
-              Text(
-                "Hello Dr. $doctorName,",
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 15),
-              const Text(
-                "Your account is pending admin approval. Please wait for the admin to verify your credentials.",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black54,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 40),
-              ElevatedButton(
-                onPressed: () async {
-                  await FirebaseAuth.instance.signOut();
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2E7D32),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 40,
-                    vertical: 15,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: const Text(
-                  "Back to Login",
-                  style: TextStyle(color: Colors.white, fontSize: 16),
-                ),
-              ),
-            ],
-          ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.hourglass_empty, size: 80, color: Colors.orange),
+            Text("Dr. $doctorName", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            const Text("Your account is pending approval."),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Back"),
+            )
+          ],
         ),
       ),
     );

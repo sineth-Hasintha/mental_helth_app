@@ -11,24 +11,65 @@ class AdminDoctorApprovalPage extends StatefulWidget {
 class _AdminDoctorApprovalPageState extends State<AdminDoctorApprovalPage> {
   bool isPendingTab = true;
 
+  // Doctor ව Approve හෝ Reject කිරීමේ function එක
   Future<void> _updateDoctorStatus(String docId, String newStatus) async {
     try {
-      await FirebaseFirestore.instance.collection('doctors').doc(docId).update({
-        'status': newStatus,
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Doctor successfully $newStatus!")),
-      );
+      // 1. doctors collection එකෙන් දත්ත ලබා ගැනීම
+      DocumentSnapshot docSnapshot = await FirebaseFirestore.instance
+          .collection('doctors')
+          .doc(docId)
+          .get();
+
+      if (docSnapshot.exists) {
+        Map<String, dynamic> doctorData = docSnapshot.data() as Map<String, dynamic>;
+
+        if (newStatus == 'approved') {
+          // 2. confirm-doctor collection එකට දත්ත copy කිරීම
+          doctorData['status'] = 'approved';
+
+          await FirebaseFirestore.instance
+              .collection('confirm-doctor')
+              .doc(docId)
+              .set(doctorData);
+
+          // 3. doctors collection එකෙන් දත්ත ඉවත් කිරීම
+          await FirebaseFirestore.instance
+              .collection('doctors')
+              .doc(docId)
+              .delete();
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Doctor moved to Confirmed Table!")),
+            );
+            // Tab එක මාරු කිරීම
+            setState(() => isPendingTab = false);
+          }
+        } else {
+          // Reject කළොත් status එක පමණක් update කිරීම
+          await FirebaseFirestore.instance
+              .collection('doctors')
+              .doc(docId)
+              .update({'status': 'rejected'});
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Doctor status updated to Rejected!")),
+            );
+          }
+        }
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error updating status: $e")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e")),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Screen එකේ පළල සහ උස ලබාගැනීම (Responsive කිරීම සඳහා)
     final double screenWidth = MediaQuery.of(context).size.width;
     final double screenHeight = MediaQuery.of(context).size.height;
 
@@ -43,117 +84,53 @@ class _AdminDoctorApprovalPageState extends State<AdminDoctorApprovalPage> {
         ),
       ),
       body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05), // Screen එකේ පළලින් 5% ක Padding එකක්
+        padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
         child: Column(
           children: [
-            // Legend එක (Approve සහ Reject)
+            // Legend
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  width: screenWidth * 0.08, 
-                  height: screenHeight * 0.012, 
-                  color: const Color(0xFF65B741)
-                ),
+                Container(width: screenWidth * 0.08, height: screenHeight * 0.012, color: const Color(0xFF65B741)),
                 SizedBox(width: screenWidth * 0.02),
-                Text(
-                  "= Approve", 
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenWidth * 0.035)
-                ),
+                Text("= Approve", style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenWidth * 0.035)),
                 SizedBox(width: screenWidth * 0.08),
-                Container(
-                  width: screenWidth * 0.08, 
-                  height: screenHeight * 0.012, 
-                  color: const Color(0xFFE72929)
-                ),
+                Container(width: screenWidth * 0.08, height: screenHeight * 0.012, color: const Color(0xFFE72929)),
                 SizedBox(width: screenWidth * 0.02),
-                Text(
-                  "= Reject", 
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenWidth * 0.035)
-                ),
+                Text("= Reject", style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenWidth * 0.035)),
               ],
             ),
             SizedBox(height: screenHeight * 0.025),
 
-            // Pending / Confirmed Tab Bar එක
+            // Tab Bar
             Container(
-              height: screenHeight * 0.055, // Screen එකේ උසින් 5.5% ක්
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(10),
-              ),
+              height: screenHeight * 0.055,
+              decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)),
               child: Row(
                 children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => isPendingTab = true),
-                      child: Container(
-                        margin: EdgeInsets.all(screenWidth * 0.01),
-                        decoration: BoxDecoration(
-                          color: isPendingTab ? Colors.white : Colors.transparent,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          "Pending",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: screenWidth * 0.035,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => isPendingTab = false),
-                      child: Container(
-                        margin: EdgeInsets.all(screenWidth * 0.01),
-                        decoration: BoxDecoration(
-                          color: !isPendingTab ? Colors.white : Colors.transparent,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          "Confirmed",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: screenWidth * 0.035,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+                  _buildTabItem("Pending", true, screenWidth),
+                  _buildTabItem("Confirmed", false, screenWidth),
                 ],
               ),
             ),
             SizedBox(height: screenHeight * 0.03),
 
-            // Table Headers
+            // Headers
             Row(
               children: [
-                Expanded(
-                  flex: 3, 
-                  child: Text("Name", style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenWidth * 0.038))
-                ),
-                Expanded(
-                  flex: 3, 
-                  child: Text("Specialization", style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenWidth * 0.038), textAlign: TextAlign.center)
-                ),
-                Expanded(
-                  flex: 2, 
-                  child: Text("Stats", style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenWidth * 0.038), textAlign: TextAlign.right)
-                ),
+                Expanded(flex: 3, child: Text("Name", style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenWidth * 0.038))),
+                Expanded(flex: 3, child: Text("Specialization", style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenWidth * 0.038), textAlign: TextAlign.center)),
+                Expanded(flex: 2, child: Text("Stats", style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenWidth * 0.038), textAlign: TextAlign.right)),
               ],
             ),
-            SizedBox(height: screenHeight * 0.01),
             const Divider(thickness: 1),
 
-            // Firebase Data List
+            // Firestore List
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
+                // මෙන්න මෙතනදී tab එක අනුව collection එක මාරු වෙනවා
                 stream: FirebaseFirestore.instance
-                    .collection('doctors')
+                    .collection(isPendingTab ? 'doctors' : 'confirm-doctor')
                     .where('status', isEqualTo: isPendingTab ? 'pending' : 'approved')
                     .snapshots(),
                 builder: (context, snapshot) {
@@ -161,9 +138,7 @@ class _AdminDoctorApprovalPageState extends State<AdminDoctorApprovalPage> {
                     return const Center(child: CircularProgressIndicator());
                   }
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return Center(
-                      child: Text("No doctors found.", style: TextStyle(fontSize: screenWidth * 0.04)),
-                    );
+                    return Center(child: Text("No doctors found.", style: TextStyle(fontSize: screenWidth * 0.04)));
                   }
 
                   final doctors = snapshot.data!.docs;
@@ -180,64 +155,21 @@ class _AdminDoctorApprovalPageState extends State<AdminDoctorApprovalPage> {
                         padding: EdgeInsets.symmetric(vertical: screenHeight * 0.015),
                         child: Row(
                           children: [
-                            // Doctor Name
-                            Expanded(
-                              flex: 3,
-                              child: Text(
-                                "Dr. $name",
-                                style: TextStyle(fontWeight: FontWeight.w600, fontSize: screenWidth * 0.032),
-                                overflow: TextOverflow.ellipsis, // දිග වැඩිනම් ... ලෙස පෙන්වයි
-                              ),
-                            ),
-                            // Specialization
-                            Expanded(
-                              flex: 3,
-                              child: Text(
-                                specialization,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: screenWidth * 0.03, color: Colors.black87),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            // Action Buttons
+                            Expanded(flex: 3, child: Text("Dr. $name", style: TextStyle(fontWeight: FontWeight.w600, fontSize: screenWidth * 0.032), overflow: TextOverflow.ellipsis)),
+                            Expanded(flex: 3, child: Text(specialization, textAlign: TextAlign.center, style: TextStyle(fontSize: screenWidth * 0.03, color: Colors.black87), overflow: TextOverflow.ellipsis)),
                             Expanded(
                               flex: 2,
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: isPendingTab
                                     ? [
-                                        // Approve Button
-                                        GestureDetector(
-                                          onTap: () => _updateDoctorStatus(docId, 'approved'),
-                                          child: Container(
-                                            padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.02, vertical: screenHeight * 0.003),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFF65B741),
-                                              borderRadius: BorderRadius.circular(4),
-                                            ),
-                                            child: Icon(Icons.check, color: Colors.white, size: screenWidth * 0.035),
-                                          ),
-                                        ),
-                                        SizedBox(width: screenWidth * 0.015),
-                                        // Reject Button
-                                        GestureDetector(
-                                          onTap: () => _updateDoctorStatus(docId, 'rejected'),
-                                          child: Container(
-                                            padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.02, vertical: screenHeight * 0.003),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFE72929),
-                                              borderRadius: BorderRadius.circular(4),
-                                            ),
-                                            child: Icon(Icons.close, color: Colors.white, size: screenWidth * 0.035),
-                                          ),
-                                        ),
-                                      ]
+                                  _buildActionButton(Icons.check, const Color(0xFF65B741), () => _updateDoctorStatus(docId, 'approved'), screenWidth, screenHeight),
+                                  SizedBox(width: screenWidth * 0.015),
+                                  _buildActionButton(Icons.close, const Color(0xFFE72929), () => _updateDoctorStatus(docId, 'rejected'), screenWidth, screenHeight),
+                                ]
                                     : [
-                                        Text(
-                                          "Approved", 
-                                          style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: screenWidth * 0.03)
-                                        )
-                                      ],
+                                  Text("Approved", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: screenWidth * 0.03))
+                                ],
                               ),
                             ),
                           ],
@@ -251,21 +183,46 @@ class _AdminDoctorApprovalPageState extends State<AdminDoctorApprovalPage> {
           ],
         ),
       ),
-      
-      // Bottom Navigation Bar Placeholder
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: Colors.green,
         unselectedItemColor: Colors.black,
         showUnselectedLabels: true,
-        selectedFontSize: screenWidth * 0.03,
-        unselectedFontSize: screenWidth * 0.03,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Dashboard'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Users'),
           BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Appointments'),
           BottomNavigationBarItem(icon: Icon(Icons.medical_services), label: 'Doctors'),
         ],
+      ),
+    );
+  }
+
+  // Helper Widgets (Code එක කෙටි කිරීමට)
+  Widget _buildTabItem(String title, bool isPending, double screenWidth) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => isPendingTab = isPending),
+        child: Container(
+          margin: EdgeInsets.all(screenWidth * 0.01),
+          decoration: BoxDecoration(
+            color: isPendingTab == isPending ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          alignment: Alignment.center,
+          child: Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenWidth * 0.035)),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton(IconData icon, Color color, VoidCallback onTap, double screenWidth, double screenHeight) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.02, vertical: screenHeight * 0.003),
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4)),
+        child: Icon(icon, color: Colors.white, size: screenWidth * 0.035),
       ),
     );
   }
